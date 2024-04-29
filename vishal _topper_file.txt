@@ -1,0 +1,224 @@
+#!/bin/bash
+# Check if the user has provided a time argument
+if [ $# -ne 1 ]; then
+ echo "Usage: $0 <time>"
+ echo "Example: $0 12:00"
+ exit 1
+fi
+# Extract the hour and minute from the argument
+specified_time="$1"
+specified_hour=$(echo "$specified_time" | cut -d':' -f1)
+specified_minute=$(echo "$specified_time" | cut -d':' -f2)
+# Get the current hour and minute
+current_hour=$(date +%H)
+current_minute=$(date +%M)
+# Calculate the total minutes since midnight for the specified time
+specified_total_minutes=$((specified_hour * 60 + specified_minute))
+# Calculate the total minutes since midnight for the current time
+current_total_minutes=$((current_hour * 60 + current_minute))
+# Get the users logged in after the specified time
+who | while read line; do
+ login_time=$(echo "$line" | awk '{print $4}') # Extract the login time
+ login_hour=$(echo "$login_time" | cut -d':' -f1) # Extract the hour
+ login_minute=$(echo "$login_time" | cut -d':' -f2) # Extract the minute
+ # Calculate the total minutes since midnight for the login time
+ login_total_minutes=$((login_hour * 60 + login_minute))
+ # Check if the user logged in after the specified time
+ if [ "$login_total_minutes" -gt "$specified_total_minutes" ]; then
+ echo "$line"
+ fi
+done
+----------------------------4b---------------------------
+#!/bin/bash
+# Get the current hour
+current_hour=$(date +%H)
+# Determine the appropriate greeting based on the current hour
+if [ "$current_hour" -ge 5 ] && [ "$current_hour" -lt 12 ]; then
+ greeting="Good morning"
+elif [ "$current_hour" -ge 12 ] && [ "$current_hour" -lt 18 ]; then
+ greeting="Good afternoon"
+else
+ greeting="Good evening"
+fi
+# Display the greeting to the user
+echo "$greeting! Welcome back!"
+-----------------------------5a-----------------
+#!/bin/bash
+# Check if file name is provided as argument
+if [ $# -eq 0 ]; then
+ echo "Usage: $0 [FILE]"
+ exit 1
+fi
+# Check if the file exists
+if [ ! -f "$1" ]; then
+ echo "Error: File '$1' not found."
+ exit 1
+fi
+# Read and output the content of the file
+while IFS= read -r line; do
+ echo "$line"
+done < "$1"
+------------------------------5b----------------------------
+#!/bin/bash
+# Check if correct number of arguments are provided
+if [ $# -ne 2 ]; then
+ echo "Usage: $0 <source_file> <destination_file>"
+ exit 1
+fi
+# Check if source file exists
+if [ ! -f "$1" ]; then
+ echo "Error: Source file '$1' does not exist."
+ exit 1
+fi
+# Copy the source file to the destination
+cp "$1" "$2"
+# Check if copy operation was successful
+if [ $? -eq 0 ]; then
+ echo "File '$1' copied to '$2' successfully."
+else
+ echo "Error: Failed to copy file '$1' to '$2'."
+fi
+------------------------------6a---------------------------
+#!/bin/bash
+# Check if filename is provided
+if [ -z "$1" ]; then
+ echo "Usage: $0 [filename]"
+ exit 1
+fi
+# Check if file exists
+if [ ! -f "$1" ]; then
+ echo "File '$1' not found."
+ exit 1
+fi
+# Output the first 10 lines of the file
+head -n 10 "$1"
+--------------------------------6b--------------------------------
+#!/bin/bash
+# Check if filename is provided
+if [ -z "$1" ]; then
+ echo "Usage: $0 filename"
+ exit 1
+fi
+filename=$1
+# Check if file exists
+if [ ! -f "$filename" ]; then
+ echo "File '$filename' does not exist."
+ exit 1
+fi
+# Default number of lines to display
+num_lines=10
+# Check if number of lines is provided
+if [ ! -z "$2" ]; then
+ num_lines=$2
+fi
+# Display last part of the file
+tail -n $num_lines "$filename"
+----------------------------------7a--------------------------------
+#!/bin/bash
+# Check if correct number of arguments are provided
+if [ $# -ne 2 ]; then
+ echo "Usage: $0 <source> <destination>"
+ exit 1
+fi
+# Check if source file exists
+if [ ! -e "$1" ]; then
+ echo "Error: Source file/directory '$1' does not exist."
+ exit 1
+fi
+# Check if destination directory exists
+if [ ! -d "$(dirname "$2")" ]; then
+ echo "Error: Destination directory '$(dirname "$2")' does not exist."
+ exit 1
+fi
+# Check if destination file already exists
+if [ -e "$2" ]; then
+ echo "Warning: Destination file '$2' already exists. Overwrite? (y/n)"
+ read -r response
+ if [ "$response" != "y" ]; then
+ echo "Operation cancelled."
+ exit 0
+ fi
+fi
+# Perform the move operation
+mv "$1" "$2"
+echo "File/directory '$1' moved to '$2' successfully."
+----------------------------------7b--------------
+#!/bin/bash
+if [ $# -eq 0 ]; then
+ echo "Usage: $0 <filename>"
+ exit 1
+fi
+filename="$1"
+if [ ! -f "$filename" ]; then
+ echo "Error: File '$filename' not found."
+ exit 1
+fi
+awk '{ print NR, $0 }' "$filename"
+--------------------------------8---------------------------
+#!/bin/bash
+# Function to handle SIGINT
+sigint_handler() {
+ echo "Received SIGINT"
+ exit 1
+}
+# Function to handle SIGQUIT
+sigquit_handler() {
+ echo "Received SIGQUIT"
+ exit 1
+}
+# Function to handle SIGFPE
+sigfpe_handler() {
+ echo "Received SIGFPE"
+ exit 1
+}
+# Register signal handlers
+trap 'sigint_handler' SIGINT
+trap 'sigquit_handler' SIGQUIT
+trap 'sigfpe_handler' SIGFPE
+echo "Running. Press Ctrl+C to trigger SIGINT or send SIGQUIT or SIGFPE."
+# Infinite loop to keep the script running
+while true; do
+ sleep 1
+done
+---------------------------------9---------------------------
+#!/bin/bash
+
+echo "Parent process $$ is starting..."
+
+# Define a function for the child process
+child_process() {
+  echo "Child process $BASHPID is starting..."
+  sleep 5
+  echo "Child process $BASHPID is done."
+}
+
+# Start the child process in the background
+child_process &
+
+# Intentionally wait indefinitely without handling the child process termination
+while true; do
+    sleep 1
+done
+
+echo "Parent process $$ is continuing..."
+--------------------------------10------------------------------
+#!/bin/bash
+
+# Function for the child process
+child_process() {
+echo "Child process created..."  
+echo "Displaying from Child Process"
+}
+
+# Main script
+
+echo "Parent Running..."
+echo "Displaying parent from Parent process"
+
+# Fork the child process
+child_process &
+
+# Ensure parent process waits for child to finish before exiting
+wait
+
+echo "Parent process is done." 
